@@ -147,3 +147,52 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# ---------------------------------------------------------------------------
+# Project-specific
+# ---------------------------------------------------------------------------
+
+# Local env files (all .env* except the template are ignored above; explicit for clarity)
+.env.local
+.env.*.local
+supabase/functions/.env
+supabase/.env
+
+# vite-plugin-pwa dev service worker output
+dev-dist/
+
+# Supabase CLI local state
+supabase/.temp/
+supabase/.branches/
+supabase/.supabase/
+supabase/seed.local.sql
+
+# Secrets / credentials (Gemini, Google Cloud service accounts, certs)
+*.pem
+*.key
+*.p12
+*-service-account*.json
+service-account*.json
+gcloud-credentials*.json
+credentials.json
+.secrets/
+
+# Test & tooling output
+test-results/
+playwright-report/
+.vitest/
+
+# IDE / editor
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
