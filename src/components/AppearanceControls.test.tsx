@@ -15,7 +15,7 @@ describe('AppearanceControls', () => {
       />,
     )
 
-    expect(screen.getByLabelText('Color theme')).toHaveValue('system')
+    expect(screen.getByRole('button', { name: 'System theme' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByLabelText('Message text size')).toHaveValue('default')
   })
 
@@ -31,7 +31,7 @@ describe('AppearanceControls', () => {
       />,
     )
 
-    fireEvent.change(screen.getByLabelText('Color theme'), { target: { value: 'dark' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Dark theme' }))
     fireEvent.change(screen.getByLabelText('Message text size'), { target: { value: 'large' } })
 
     expect(onThemeChange).toHaveBeenCalledWith('dark')

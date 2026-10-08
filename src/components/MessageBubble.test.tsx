@@ -12,7 +12,6 @@ describe('MessageBubble', () => {
           role: 'assistant',
           content: '# Answer\n\nA **formatted** reply.\n\n| Name | Value |\n| --- | --- |\n| One | `1` |',
         }}
-        textSize="default"
         messageNumber={1}
       />,
     )
@@ -28,7 +27,6 @@ describe('MessageBubble', () => {
     render(
       <MessageBubble
         message={{ role: 'assistant', content: '<img src=x onerror=alert(1) />' }}
-        textSize="default"
         messageNumber={2}
       />,
     )
@@ -37,16 +35,15 @@ describe('MessageBubble', () => {
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
   })
 
-  it('labels user messages and applies their selected text size', () => {
+  it('labels user messages and inherits the application text size', () => {
     render(
       <MessageBubble
         message={{ role: 'user', content: 'Hello' }}
-        textSize="large"
         messageNumber={3}
       />,
     )
 
     expect(screen.getByRole('article', { name: 'Your message 3' })).toBeInTheDocument()
-    expect(screen.getByText('Hello').parentElement).toHaveAttribute('data-text-size', 'large')
+    expect(screen.getByRole('article', { name: 'Your message 3' })).toHaveClass('conversation-content')
   })
 })

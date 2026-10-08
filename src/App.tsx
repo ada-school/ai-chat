@@ -14,6 +14,7 @@ import { env } from './lib/env'
 import { createChatProvider } from './services/ai'
 import { PROVIDER_CATALOG } from './services/ai/catalog'
 import { getChatRepository } from './services/chat'
+import type { ChatModelOption } from './components/ChatConfiguration'
 
 const repository = getChatRepository()
 
@@ -24,22 +25,65 @@ export default function App() {
   const [selectedProvider, setSelectedProvider] = useState<AiProviderId>(env.aiProvider)
   const [selectedModel, setSelectedModel] = useState(env.ollamaModel)
   const ollama = useOllamaModels(env.ollamaBaseUrl)
-  const providerOptions = [
-    { provider: PROVIDER_CATALOG.mock, available: true },
-    { provider: PROVIDER_CATALOG.ollama, available: true },
+  const modelOptions: ChatModelOption[] = [
+    {
+      id: 'mock:demo',
+      provider: 'mock',
+      model: 'demo',
+      label: PROVIDER_CATALOG.mock.modelLabel,
+      source: PROVIDER_CATALOG.mock.source,
+      available: true,
+    },
+    ...ollama.models.map((model) => ({
+      id: `ollama:${model.name}`,
+      provider: 'ollama' as const,
+      model: model.name,
+      label: model.name,
+      source: PROVIDER_CATALOG.ollama.source,
+      available: true,
+    })),
     ...(repository.kind === 'supabase' || selectedProvider === 'gemini'
-      ? [{ provider: PROVIDER_CATALOG.gemini, available: repository.kind === 'supabase' }]
+      ? [{
+          id: 'gemini:configured',
+          provider: 'gemini' as const,
+          model: PROVIDER_CATALOG.gemini.modelLabel,
+          label: PROVIDER_CATALOG.gemini.modelLabel,
+          source: PROVIDER_CATALOG.gemini.source,
+          available: repository.kind === 'supabase',
+        }]
       : []),
   ]
-  const effectiveModel = ollama.models.some((model) => model.name === selectedModel)
-    ? selectedModel
-    : ollama.models[0]?.name ?? selectedModel
+  const effectiveModel = selectedProvider === 'ollama' && !ollama.models.some((model) => model.name === selectedModel)
+    ? ollama.models[0]?.name ?? selectedModel
+    : selectedModel
+  const currentOptionId = selectedProvider === 'ollama'
+    ? `ollama:${effectiveModel}`
+    : selectedProvider === 'gemini'
+      ? 'gemini:configured'
+      : 'mock:demo'
+  const currentOptionAvailable = modelOptions.some((option) => option.id === currentOptionId)
+  if (!currentOptionAvailable) {
+    modelOptions.push({
+      id: currentOptionId,
+      provider: selectedProvider,
+      model: selectedModel,
+      label: ollama.isLoading ? 'Loading Ollama models…' : `${selectedModel} (unavailable)`,
+      source: PROVIDER_CATALOG[selectedProvider].source,
+      available: false,
+    })
+  }
+  const selectedOption = modelOptions.find((option) => option.id === currentOptionId)
+  const handleModelSelect = (option: ChatModelOption) => {
+    setSelectedProvider(option.provider)
+    setSelectedModel(option.model)
+  }
   const activeProvider = useMemo(
     () => createChatProvider(selectedProvider, { ...env, ollamaModel: effectiveModel }),
     [selectedProvider, effectiveModel],
   )
   const chat = useChat({ repository, provider: activeProvider, enabled: auth.status === 'ready' })
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const activeTitle = chat.conversations.find((c) => c.id === chat.activeId)?.title ?? 'New chat'
 
@@ -81,9 +125,11 @@ export default function App() {
           />
         )}
         <aside
-          className={`fixed inset-y-0 left-0 z-40 w-72 bg-neutral-50 transition-transform md:static md:translate-x-0 dark:bg-neutral-900 ${
+          aria-hidden={sidebarCollapsed || undefined}
+          inert={sidebarCollapsed}
+          className={`fixed inset-y-0 left-0 z-40 w-72 shrink-0 overflow-hidden bg-neutral-50 transition-[transform,width] duration-200 md:static md:translate-x-0 dark:bg-neutral-900 ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+          } ${sidebarCollapsed ? 'md:w-0' : 'md:w-72'}`}
         >
           <button
             type="button"
@@ -108,15 +154,24 @@ export default function App() {
 
         <ChatWindow
           title={activeTitle}
-          providerOptions={providerOptions}
+          source={selectedOption?.source ?? PROVIDER_CATALOG[selectedProvider].source}
           selectedProvider={selectedProvider}
-          selectedModel={effectiveModel}
-          availableModels={ollama.models.map((model) => model.name)}
+          modelLabel={PROVIDER_CATALOG[selectedProvider].modelLabel}
+          modelOptions={modelOptions}
+          selectedOptionId={currentOptionId}
           isLoadingModels={ollama.isLoading}
           modelLoadFailed={ollama.error}
-          onProviderChange={setSelectedProvider}
-          onModelChange={setSelectedModel}
+          onModelSelect={handleModelSelect}
           onRefreshModels={ollama.refresh}
+          emptyMessage={
+            selectedProvider === 'ollama' && ollama.isLoading
+              ? 'Loading models…'
+              : selectedProvider === 'ollama' && ollama.error
+                ? 'Could not check available models.'
+                : selectedProvider === 'ollama' && ollama.models.length > 0
+                  ? 'No messages yet. Start a conversation.'
+                  : 'No models available to respond'
+          }
           theme={appearance.theme}
           textSize={appearance.textSize}
           onThemeChange={appearance.setTheme}
@@ -129,7 +184,12 @@ export default function App() {
           onDismissError={chat.dismissError}
           onSend={(text) => void chat.sendMessage(text)}
           onStop={chat.stopGenerating}
-          onOpenSidebar={() => setSidebarOpen(true)}
+          onOpenSidebar={() => {
+            setSidebarCollapsed(false)
+            setSidebarOpen(true)
+          }}
+          isSidebarCollapsed={sidebarCollapsed}
+          onToggleSidebar={() => setSidebarCollapsed((collapsed) => !collapsed)}
           onNewChat={chat.startNewChat}
         />
       </div>

@@ -46,6 +46,10 @@ export function useAppearance() {
   }, [theme])
 
   useEffect(() => {
+    document.documentElement.dataset.textSize = textSize
+  }, [textSize])
+
+  useEffect(() => {
     try {
       window.localStorage.setItem(TEXT_SIZE_KEY, textSize)
     } catch {

@@ -1,5 +1,4 @@
 import type { Message } from '../types/chat'
-import type { MessageTextSize } from '../hooks/useAppearance'
 import type { Components } from 'react-markdown'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -7,7 +6,6 @@ import { SparkIcon } from './icons'
 
 interface MessageBubbleProps {
   message: Pick<Message, 'role' | 'content'>
-  textSize: MessageTextSize
   messageNumber: number
 }
 
@@ -20,16 +18,15 @@ const markdownComponents: Components = {
   h6: ({ children }) => <p><strong>{children}</strong></p>,
 }
 
-export function MessageBubble({ message, textSize, messageNumber }: MessageBubbleProps) {
+export function MessageBubble({ message, messageNumber }: MessageBubbleProps) {
   if (message.role === 'user') {
     return (
       <article
         aria-label={`Your message ${messageNumber}`}
-        className="flex justify-end"
+        className="conversation-content flex justify-end"
       >
         <div
-          className="conversation-content max-w-[85%] rounded-3xl bg-neutral-100 px-5 py-2.5 break-words dark:bg-neutral-800"
-          data-text-size={textSize}
+          className="max-w-[85%] rounded-3xl bg-neutral-100 px-5 py-2.5 break-words dark:bg-neutral-800"
         >
           <p className="m-0 whitespace-pre-wrap">{message.content}</p>
         </div>
@@ -47,7 +44,6 @@ export function MessageBubble({ message, textSize, messageNumber }: MessageBubbl
       </div>
       <div
         className="conversation-content min-w-0 flex-1 pt-1 break-words"
-        data-text-size={textSize}
       >
         <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
           {message.content}

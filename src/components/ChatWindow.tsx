@@ -2,26 +2,25 @@ import { useEffect, useRef } from 'react'
 import type { AiProviderId } from '../types/ai'
 import type { ColorTheme, MessageTextSize } from '../hooks/useAppearance'
 import type { Message } from '../types/chat'
-import { AppearanceControls } from './AppearanceControls'
+import { ConversationSettings } from './ConversationSettings'
+import type { ChatModelOption } from './ChatConfiguration'
 import { InputArea } from './InputArea'
 import { MessageBubble } from './MessageBubble'
-import { ProviderSelector, type ProviderOption } from './ProviderSelector'
 import { TypingIndicator } from './TypingIndicator'
-import { MenuIcon, PlusIcon } from './icons'
-
-const SUGGESTIONS = ['Hello!', 'What can you do?', 'Tell me about Gemini']
+import { MenuIcon, PanelLeftCloseIcon, PanelLeftOpenIcon, PlusIcon } from './icons'
 
 interface ChatWindowProps {
   title: string
-  providerOptions: ProviderOption[]
+  source: string
   selectedProvider: AiProviderId
-  selectedModel: string
-  availableModels: string[]
+  modelLabel: string
+  modelOptions: ChatModelOption[]
+  selectedOptionId: string
   isLoadingModels: boolean
   modelLoadFailed: boolean
-  onProviderChange: (provider: AiProviderId) => void
-  onModelChange: (model: string) => void
+  onModelSelect: (option: ChatModelOption) => void
   onRefreshModels: () => void
+  emptyMessage: string
   theme: ColorTheme
   textSize: MessageTextSize
   onThemeChange: (theme: ColorTheme) => void
@@ -35,20 +34,23 @@ interface ChatWindowProps {
   onSend: (text: string) => void
   onStop: () => void
   onOpenSidebar: () => void
+  isSidebarCollapsed: boolean
+  onToggleSidebar: () => void
   onNewChat: () => void
 }
 
 export function ChatWindow({
   title,
-  providerOptions,
+  source,
   selectedProvider,
-  selectedModel,
-  availableModels,
+  modelLabel,
+  modelOptions,
+  selectedOptionId,
   isLoadingModels,
   modelLoadFailed,
-  onProviderChange,
-  onModelChange,
+  onModelSelect,
   onRefreshModels,
+  emptyMessage,
   theme,
   textSize,
   onThemeChange,
@@ -62,13 +64,16 @@ export function ChatWindow({
   onSend,
   onStop,
   onOpenSidebar,
+  isSidebarCollapsed,
+  onToggleSidebar,
   onNewChat,
 }: ChatWindowProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
   const isEmpty = !isLoading && messages.length === 0 && !isGenerating
+  const activeModelLabel = modelOptions.find((option) => option.id === selectedOptionId)?.label ?? modelLabel
 
   useEffect(() => {
-    const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+    const behavior = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
     bottomRef.current?.scrollIntoView({ behavior, block: 'end' })
   }, [messages.length, isGenerating])
 
@@ -83,12 +88,31 @@ export function ChatWindow({
         >
           <MenuIcon />
         </button>
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          aria-label={isSidebarCollapsed ? 'Show conversations' : 'Collapse conversations'}
+          title={isSidebarCollapsed ? 'Show conversations' : 'Collapse conversations'}
+          className="hidden rounded-lg p-2 hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 md:flex dark:hover:bg-neutral-800 dark:focus-visible:outline-blue-400"
+        >
+          {isSidebarCollapsed ? <PanelLeftOpenIcon /> : <PanelLeftCloseIcon />}
+        </button>
         <h1 className="flex-1 truncate text-base font-medium">{title}</h1>
-        <AppearanceControls
+        <ConversationSettings
           theme={theme}
           textSize={textSize}
           onThemeChange={onThemeChange}
           onTextSizeChange={onTextSizeChange}
+          source={source}
+          provider={selectedProvider}
+          modelLabel={modelLabel}
+          modelOptions={modelOptions}
+          selectedOptionId={selectedOptionId}
+          isLoadingModels={isLoadingModels}
+          modelLoadFailed={modelLoadFailed}
+          disabled={isBusy}
+          onModelSelect={onModelSelect}
+          onRefreshModels={onRefreshModels}
         />
         <button
           type="button"
@@ -103,25 +127,13 @@ export function ChatWindow({
       <div className="flex-1 overflow-y-auto">
         {isEmpty ? (
           <div className="flex h-full flex-col items-center justify-center gap-6 px-4">
-            <h2 className="text-2xl font-semibold">How can I help you today?</h2>
-            <div className="flex flex-wrap justify-center gap-2">
-              {SUGGESTIONS.map((suggestion) => (
-                <button
-                  key={suggestion}
-                  type="button"
-                  onClick={() => onSend(suggestion)}
-                  disabled={isBusy}
-                  className="rounded-full border border-neutral-200 px-4 py-2 text-sm hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
+            <p role="status" className="text-center text-base text-neutral-500 dark:text-neutral-400">
+              {emptyMessage}
+            </p>
           </div>
         ) : (
           <div
             className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6"
-            data-text-size={textSize}
             role="log"
             aria-label="Conversation messages"
             aria-live="polite"
@@ -133,7 +145,6 @@ export function ChatWindow({
               <MessageBubble
                 key={message.id}
                 message={message}
-                textSize={textSize}
                 messageNumber={index + 1}
               />
             ))}
@@ -155,19 +166,15 @@ export function ChatWindow({
             </button>
           </div>
         )}
-        <ProviderSelector
-          options={providerOptions}
-          selectedProvider={selectedProvider}
-          selectedModel={selectedModel}
-          availableModels={availableModels}
-          isLoadingModels={isLoadingModels}
-          modelLoadFailed={modelLoadFailed}
-          disabled={isBusy}
-          onProviderChange={onProviderChange}
-          onModelChange={onModelChange}
-          onRefreshModels={onRefreshModels}
+        <p className="mb-2 truncate px-2 text-xs text-neutral-500 dark:text-neutral-400">
+          Talking to <span className="font-medium text-neutral-700 dark:text-neutral-300">{activeModelLabel}</span>
+        </p>
+        <InputArea
+          onSend={onSend}
+          onStop={onStop}
+          isGenerating={isGenerating}
+          disabled={isBusy && !isGenerating}
         />
-        <InputArea onSend={onSend} onStop={onStop} isGenerating={isGenerating} disabled={isBusy && !isGenerating} />
       </div>
     </main>
   )

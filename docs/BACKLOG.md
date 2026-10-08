@@ -13,7 +13,7 @@ Legend: ✅ done in the initial scaffold · ⬜ to do
 
 Acceptance criteria
 - [x] A "New chat" button sits at the top of the sidebar (and in the header on mobile).
-- [x] Clicking it clears the chat area and shows the empty state with suggestions.
+- [x] Clicking it clears the chat area and shows one concise empty-state message.
 - [x] No conversation row is created until the first message is sent (no empty chats).
 - [x] The new conversation's title is the first message, cut to 40 characters with an ellipsis.
 
@@ -109,7 +109,9 @@ Acceptance criteria
 - [x] The Ollama URL and model are configurable, with local defaults, and the provider sends full chat history using the Ollama chat API.
 - [x] The provider supports request cancellation, validates responses, and reports safe, actionable errors for unreachable servers and missing models.
 - [x] The UI identifies the active provider and configured local model; conversation persistence remains independent of the AI provider.
-- [x] The composer shows the active source and model, and lets users switch between configured providers and installed Ollama models.
+- [x] The composer configuration shows the active source and lets users choose among installed Ollama models.
+- [x] Chat configuration is hidden behind a gear button inside the composer opposite Send, exposes the source as read-only context, and allows model selection without a provider/source selector.
+- [x] Sample prompt suggestions are removed; an empty Ollama setup shows one “No models available to respond” message.
 - [x] Provider metadata includes pricing semantics: Ollama local/no per-token provider charge, mock free, cloud pricing unknown until explicitly configured.
 - [x] Provider contracts and registry allow adding future providers (including Claude or Gemini) without changing UI or chat orchestration.
 - [x] Setup and CORS requirements are documented; credentials are not embedded in the browser.
@@ -128,7 +130,7 @@ Acceptance criteria
 
 ### Phase 2 — UI ✅
 - [x] `ConversationList`, `ChatWindow`, `MessageBubble`, `InputArea`, `TypingIndicator`.
-- [x] Empty state with suggestion chips.
+- [x] Empty state without sample prompt chips.
 - [x] Auto-growing textarea, auto-scroll to the latest message.
 - [x] Safe Markdown rendering for assistant messages (`react-markdown` + GFM), including readable tables, lists, links, blockquotes and code blocks.
 

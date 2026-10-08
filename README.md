@@ -82,7 +82,7 @@ npx supabase status         # prints the local API URL and anon key for .env.loc
    VITE_OLLAMA_BASE_URL=http://localhost:11434
    VITE_OLLAMA_MODEL=llama3.2
    ```
-4. Restart `npm run dev`. The controls below the composer show the AI source and model. Switch between Ollama and demo replies there; if more than one Ollama model is installed, choose the model in the adjacent selector. Prompts are sent directly from the browser to this configured Ollama URL; Ollama runs on your hardware and has no per-token provider charge.
+4. Restart `npm run dev`. Open the gear button inside the composer, opposite Send, to see the active source and choose from installed Ollama models. Prompts are sent directly from the browser to this configured Ollama URL; Ollama runs on your hardware and has no per-token provider charge.
 
 The browser calls Ollama's non-streaming `/api/chat` endpoint and cancels an in-flight request when the user presses Stop. Because this SPA connects directly, browser CORS must allow the exact app origin. Ollama must be reachable from the device running the browser; this setup does not expose your local Ollama server to other users of a deployed site. No Ollama API key is put in the browser.
 

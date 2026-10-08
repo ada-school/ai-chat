@@ -1,4 +1,10 @@
-import { useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from 'react'
 import { SendIcon, StopIcon } from './icons'
 
 const MAX_HEIGHT_PX = 200
@@ -10,7 +16,12 @@ interface InputAreaProps {
   disabled?: boolean
 }
 
-export function InputArea({ onSend, onStop, isGenerating, disabled = false }: InputAreaProps) {
+export function InputArea({
+  onSend,
+  onStop,
+  isGenerating,
+  disabled = false,
+}: InputAreaProps) {
   const [value, setValue] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const canSend = value.trim().length > 0 && !isGenerating && !disabled
@@ -44,7 +55,7 @@ export function InputArea({ onSend, onStop, isGenerating, disabled = false }: In
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex items-end gap-2 rounded-3xl border border-neutral-200 bg-white p-2 pl-5 shadow-sm focus-within:border-neutral-400 dark:border-neutral-700 dark:bg-neutral-800 dark:focus-within:border-neutral-500"
+      className="flex items-end gap-2 rounded-3xl border border-neutral-200 bg-white p-2 shadow-sm focus-within:border-neutral-400 dark:border-neutral-700 dark:bg-neutral-800 dark:focus-within:border-neutral-500"
     >
       <label htmlFor="chat-input" className="sr-only">
         Message
@@ -59,7 +70,7 @@ export function InputArea({ onSend, onStop, isGenerating, disabled = false }: In
         placeholder="Message AI Chat"
         disabled={disabled}
         autoFocus
-        className="max-h-[200px] flex-1 resize-none bg-transparent py-2 leading-6 outline-none placeholder:text-neutral-400 disabled:opacity-50"
+        className="max-h-[200px] min-w-0 flex-1 resize-none bg-transparent px-2 py-2 leading-6 outline-none placeholder:text-neutral-400 disabled:opacity-50"
       />
       {isGenerating && onStop ? (
         <button
