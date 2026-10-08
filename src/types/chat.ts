@@ -1,4 +1,12 @@
+import type { AiProviderId } from './ai'
+
 export type Role = 'user' | 'assistant' | 'system'
+
+export interface MessageModelDetails {
+  provider: AiProviderId
+  model: string
+  source: string
+}
 
 export interface Conversation {
   id: string
@@ -14,6 +22,7 @@ export interface Message {
   role: Role
   content: string
   createdAt: string
+  modelDetails?: MessageModelDetails
 }
 
 /** Minimal shape sent to an AI provider: role + content, oldest first. */

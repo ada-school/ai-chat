@@ -128,7 +128,8 @@ The app runs **without Supabase configured**: if `VITE_SUPABASE_URL` / `VITE_SUP
 │   └── test/setup.ts         # Vitest setup
 └── supabase/
     ├── migrations/
-    │   └── 20261007000000_init.sql  # Tables, indexes, triggers, RLS
+    │   ├── 20261007000000_init.sql
+    │   └── 20261008000000_add_message_model_details.sql
     └── functions/
         └── chat/index.ts     # Edge Function stub (future Gemini proxy, Deno)
 ```
@@ -141,7 +142,7 @@ The app runs **without Supabase configured**: if `VITE_SUPABASE_URL` / `VITE_SUP
 type Role = 'user' | 'assistant' | 'system';
 
 interface Conversation { id; userId; title; createdAt; updatedAt }
-interface Message      { id; conversationId; role; content; createdAt }
+interface Message      { id; conversationId; role; content; createdAt; modelDetails? }
 ```
 
 ### Database (Postgres, schema `public`)
@@ -150,9 +151,11 @@ interface Message      { id; conversationId; role; content; createdAt }
 | --- | --- | --- |
 | `auth.users` | managed by Supabase | Anonymous or identified users |
 | `conversations` | `id uuid pk`, `user_id uuid fk → auth.users`, `title text`, `created_at`, `updated_at` | `updated_at` bumped by trigger when a message is inserted, so the sidebar sorts by recent activity |
-| `messages` | `id uuid pk`, `conversation_id uuid fk → conversations (on delete cascade)`, `user_id uuid fk → auth.users`, `role text check in (user, assistant, system)`, `content text`, `created_at` | `user_id` is denormalized so RLS stays a simple equality check |
+| `messages` | `id uuid pk`, `conversation_id uuid fk → conversations (on delete cascade)`, `user_id uuid fk → auth.users`, `role text check in (user, assistant, system)`, `content text`, `created_at`, nullable `model_provider`, `model_name`, `model_source` | Assistant model metadata is stored with the reply; `user_id` is denormalized so RLS stays a simple equality check |
 
 RLS policies: `select/insert/update/delete` allowed only when `user_id = auth.uid()`. Message insert also checks that the target conversation belongs to the caller.
+
+Assistant messages display their timestamp and stored model metadata; their original Markdown can be copied from the reply actions.
 
 ---
 

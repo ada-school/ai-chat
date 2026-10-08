@@ -1,9 +1,10 @@
-import type { Conversation, Message, Role } from '../../types/chat'
+import type { Conversation, Message, MessageModelDetails, Role } from '../../types/chat'
 
 export interface NewMessage {
   conversationId: string
   role: Role
   content: string
+  modelDetails?: MessageModelDetails
 }
 
 /** Persistence boundary for conversations and messages. */

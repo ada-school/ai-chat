@@ -18,6 +18,23 @@ describe('LocalChatRepository', () => {
     expect(messages.map((m) => m.content)).toEqual(['hi', 'hello'])
   })
 
+  it('persists model details with assistant messages', async () => {
+    const conversation = await repo.createConversation('Model metadata')
+    const modelDetails = {
+      provider: 'ollama' as const,
+      model: 'llama3.2',
+      source: 'Local Ollama server',
+    }
+    await repo.addMessage({
+      conversationId: conversation.id,
+      role: 'assistant',
+      content: 'Hello',
+      modelDetails,
+    })
+
+    expect(await repo.listMessages(conversation.id)).toMatchObject([{ modelDetails }])
+  })
+
   it('lists the most recently active conversation first', async () => {
     const a = await repo.createConversation('A')
     await repo.createConversation('B')

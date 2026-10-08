@@ -17,6 +17,12 @@ const base = {
 export const PlusIcon = (p: IconProps) => (
   <svg {...base} {...p}><path d="M12 5v14M5 12h14" /></svg>
 )
+export const CopyIcon = (p: IconProps) => (
+  <svg {...base} {...p}><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" /></svg>
+)
+export const CheckIcon = (p: IconProps) => (
+  <svg {...base} {...p}><path d="m5 12 4 4L19 6" /></svg>
+)
 export const SendIcon = (p: IconProps) => (
   <svg {...base} {...p}><path d="M12 19V5M5 12l7-7 7 7" /></svg>
 )

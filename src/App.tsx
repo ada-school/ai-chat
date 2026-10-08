@@ -81,7 +81,16 @@ export default function App() {
     () => createChatProvider(selectedProvider, { ...env, ollamaModel: effectiveModel }),
     [selectedProvider, effectiveModel],
   )
-  const chat = useChat({ repository, provider: activeProvider, enabled: auth.status === 'ready' })
+  const chat = useChat({
+    repository,
+    provider: activeProvider,
+    modelDetails: {
+      provider: selectedProvider,
+      model: selectedOption?.model ?? effectiveModel,
+      source: selectedOption?.source ?? PROVIDER_CATALOG[selectedProvider].source,
+    },
+    enabled: auth.status === 'ready',
+  })
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 

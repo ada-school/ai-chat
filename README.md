@@ -27,7 +27,7 @@ npm run dev
 
 Open http://localhost:5173. With no env vars set, the app runs in **local mode**: chats are saved in your browser only.
 
-Use **Display** in the chat header to choose system, light, or dark appearance and adjust message text size. Assistant messages render safe Markdown and GitHub-flavored tables; raw HTML from model output is not rendered as markup.
+Use the settings gear in the chat header to choose system, light, or dark appearance, adjust application text size, and select a model. Each message shows its timestamp; assistant replies also show the selected model details and can be copied as Markdown. Assistant messages render safe Markdown and GitHub-flavored tables; raw HTML from model output is not rendered as markup.
 
 ## Connecting Supabase
 
@@ -39,7 +39,7 @@ Use **Display** in the chat header to choose system, light, or dark appearance a
    npx supabase link --project-ref <your-project-ref>
    npx supabase db push
    ```
-   or by pasting `supabase/migrations/20261007000000_init.sql` into the dashboard's SQL Editor and running it.
+   or by running both SQL migrations in order in the dashboard's SQL Editor: `20261007000000_init.sql`, then `20261008000000_add_message_model_details.sql`.
 4. **Configure env vars**:
    ```bash
    cp .env.example .env.local
@@ -82,7 +82,7 @@ npx supabase status         # prints the local API URL and anon key for .env.loc
    VITE_OLLAMA_BASE_URL=http://localhost:11434
    VITE_OLLAMA_MODEL=llama3.2
    ```
-4. Restart `npm run dev`. Open the gear button inside the composer, opposite Send, to see the active source and choose from installed Ollama models. Prompts are sent directly from the browser to this configured Ollama URL; Ollama runs on your hardware and has no per-token provider charge.
+4. Restart `npm run dev`. Open the gear button in the chat header to see the active source and choose from installed Ollama models. Prompts are sent directly from the browser to this configured Ollama URL; Ollama runs on your hardware and has no per-token provider charge.
 
 The browser calls Ollama's non-streaming `/api/chat` endpoint and cancels an in-flight request when the user presses Stop. Because this SPA connects directly, browser CORS must allow the exact app origin. Ollama must be reachable from the device running the browser; this setup does not expose your local Ollama server to other users of a deployed site. No Ollama API key is put in the browser.
 
@@ -197,6 +197,9 @@ erDiagram
         text role "user | assistant | system"
         text content
         timestamptz created_at
+        text model_provider "assistant replies"
+        text model_name "assistant replies"
+        text model_source "assistant replies"
     }
 ```
 

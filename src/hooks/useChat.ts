@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { userFacingError } from '../lib/userFacingError'
 import type { ChatProvider } from '../services/ai'
 import type { ChatRepository } from '../services/chat'
-import type { Conversation, Message } from '../types/chat'
+import type { Conversation, Message, MessageModelDetails } from '../types/chat'
 
 const TITLE_MAX_LENGTH = 40
 
@@ -16,11 +16,12 @@ export function titleFromMessage(text: string): string {
 interface UseChatOptions {
   repository: ChatRepository
   provider: ChatProvider
+  modelDetails: MessageModelDetails
   /** Wait until auth is ready before touching the repository. */
   enabled: boolean
 }
 
-export function useChat({ repository, provider, enabled }: UseChatOptions) {
+export function useChat({ repository, provider, modelDetails, enabled }: UseChatOptions) {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -127,6 +128,7 @@ export function useChat({ repository, provider, enabled }: UseChatOptions) {
           conversationId,
           role: 'assistant',
           content: reply,
+          modelDetails,
         })
         errorContext = 'savingMessage'
         if (activeIdRef.current === conversationId) {
@@ -142,7 +144,7 @@ export function useChat({ repository, provider, enabled }: UseChatOptions) {
         setGeneratingId(null)
       }
     },
-    [generatingId, messages, provider, refreshConversations, repository],
+    [generatingId, messages, modelDetails, provider, refreshConversations, repository],
   )
 
   const stopGenerating = useCallback(() => abortRef.current?.abort(), [])

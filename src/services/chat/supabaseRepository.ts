@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { AiProviderId } from '../../types/ai'
 import type { Conversation, Message, Role } from '../../types/chat'
 import type { ChatRepository, NewMessage } from './repository'
 
@@ -16,6 +17,9 @@ interface MessageRow {
   role: Role
   content: string
   created_at: string
+  model_provider: AiProviderId | null
+  model_name: string | null
+  model_source: string | null
 }
 
 const toConversation = (row: ConversationRow): Conversation => ({
@@ -32,6 +36,15 @@ const toMessage = (row: MessageRow): Message => ({
   role: row.role,
   content: row.content,
   createdAt: row.created_at,
+  ...(row.model_provider && row.model_name && row.model_source
+    ? {
+        modelDetails: {
+          provider: row.model_provider,
+          model: row.model_name,
+          source: row.model_source,
+        },
+      }
+    : {}),
 })
 
 export class SupabaseChatRepository implements ChatRepository {
@@ -83,18 +96,26 @@ export class SupabaseChatRepository implements ChatRepository {
   async listMessages(conversationId: string): Promise<Message[]> {
     const { data, error } = await this.client
       .from('messages')
-      .select('id, conversation_id, role, content, created_at')
+      .select('id, conversation_id, role, content, created_at, model_provider, model_name, model_source')
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: true })
     if (error) throw error
     return (data as MessageRow[]).map(toMessage)
   }
 
-  async addMessage({ conversationId, role, content }: NewMessage): Promise<Message> {
+  async addMessage({ conversationId, role, content, modelDetails }: NewMessage): Promise<Message> {
     const { data, error } = await this.client
       .from('messages')
-      .insert({ conversation_id: conversationId, role, content, user_id: await this.userId() })
-      .select('id, conversation_id, role, content, created_at')
+      .insert({
+        conversation_id: conversationId,
+        role,
+        content,
+        user_id: await this.userId(),
+        model_provider: modelDetails?.provider ?? null,
+        model_name: modelDetails?.model ?? null,
+        model_source: modelDetails?.source ?? null,
+      })
+      .select('id, conversation_id, role, content, created_at, model_provider, model_name, model_source')
       .single()
     if (error) throw error
     return toMessage(data as MessageRow)

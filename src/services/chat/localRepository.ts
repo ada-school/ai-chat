@@ -77,7 +77,7 @@ export class LocalChatRepository implements ChatRepository {
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
   }
 
-  async addMessage({ conversationId, role, content }: NewMessage): Promise<Message> {
+  async addMessage({ conversationId, role, content, modelDetails }: NewMessage): Promise<Message> {
     const store = this.read()
     const conversation = store.conversations.find((c) => c.id === conversationId)
     if (!conversation) throw new Error(`Conversation ${conversationId} not found`)
@@ -87,6 +87,7 @@ export class LocalChatRepository implements ChatRepository {
       role,
       content,
       createdAt: new Date().toISOString(),
+      ...(modelDetails ? { modelDetails } : {}),
     }
     store.messages.push(message)
     conversation.updatedAt = message.createdAt
