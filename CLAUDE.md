@@ -97,7 +97,7 @@ The app runs **without Supabase configured**: if `VITE_SUPABASE_URL` / `VITE_SUP
 │   ├── App.tsx               # Layout shell: sidebar + chat window
 │   ├── index.css             # Tailwind import + base styles
 │   ├── components/
-│   │   ├── ChatWindow.tsx        # Message list + empty state + input
+│   │   ├── ChatWindow.tsx        # Message list + empty state + provider/model controls + input
 │   │   ├── ConversationList.tsx  # Sidebar list, new chat, delete
 │   │   ├── InputArea.tsx         # Auto-growing textarea, Enter to send
 │   │   ├── MessageBubble.tsx     # Single message (user / assistant)
@@ -248,6 +248,7 @@ The provider catalog distinguishes free demo replies, locally hosted Ollama (no 
 - Components: PascalCase filenames, one component per file, named exports.
 - Hooks: `useX.ts`. Services: camelCase files, interfaces in `types.ts`/`repository.ts`.
 - DB columns are `snake_case`; map to `camelCase` in the repository layer only.
-- Tailwind for all styling; no CSS modules. Support light and dark (`prefers-color-scheme`).
+- Tailwind utility classes for UI styling; global CSS styles generated Markdown typography and tables. No CSS modules.
+- Support system, light and dark appearance, with a saved user override; message text size is adjustable.
 - Accessibility: semantic landmarks (`aside`, `main`, `form`), labelled buttons, `aria-live` on the message list.
 - Tests sit next to the code: `*.test.ts`.

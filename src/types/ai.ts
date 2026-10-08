@@ -14,6 +14,8 @@ export type ProviderPricing =
 export interface ProviderMetadata {
   id: AiProviderId
   displayName: string
+  source: string
+  modelLabel: string
   description: string
   pricing: ProviderPricing
 }

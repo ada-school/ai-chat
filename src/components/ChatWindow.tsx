@@ -1,7 +1,11 @@
 import { useEffect, useRef } from 'react'
+import type { AiProviderId } from '../types/ai'
+import type { ColorTheme, MessageTextSize } from '../hooks/useAppearance'
 import type { Message } from '../types/chat'
+import { AppearanceControls } from './AppearanceControls'
 import { InputArea } from './InputArea'
 import { MessageBubble } from './MessageBubble'
+import { ProviderSelector, type ProviderOption } from './ProviderSelector'
 import { TypingIndicator } from './TypingIndicator'
 import { MenuIcon, PlusIcon } from './icons'
 
@@ -9,8 +13,19 @@ const SUGGESTIONS = ['Hello!', 'What can you do?', 'Tell me about Gemini']
 
 interface ChatWindowProps {
   title: string
-  providerName: string
-  providerDescription: string
+  providerOptions: ProviderOption[]
+  selectedProvider: AiProviderId
+  selectedModel: string
+  availableModels: string[]
+  isLoadingModels: boolean
+  modelLoadFailed: boolean
+  onProviderChange: (provider: AiProviderId) => void
+  onModelChange: (model: string) => void
+  onRefreshModels: () => void
+  theme: ColorTheme
+  textSize: MessageTextSize
+  onThemeChange: (theme: ColorTheme) => void
+  onTextSizeChange: (size: MessageTextSize) => void
   messages: Message[]
   isLoading: boolean
   isGenerating: boolean
@@ -25,8 +40,19 @@ interface ChatWindowProps {
 
 export function ChatWindow({
   title,
-  providerName,
-  providerDescription,
+  providerOptions,
+  selectedProvider,
+  selectedModel,
+  availableModels,
+  isLoadingModels,
+  modelLoadFailed,
+  onProviderChange,
+  onModelChange,
+  onRefreshModels,
+  theme,
+  textSize,
+  onThemeChange,
+  onTextSizeChange,
   messages,
   isLoading,
   isGenerating,
@@ -42,12 +68,13 @@ export function ChatWindow({
   const isEmpty = !isLoading && messages.length === 0 && !isGenerating
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+    bottomRef.current?.scrollIntoView({ behavior, block: 'end' })
   }, [messages.length, isGenerating])
 
   return (
     <main className="flex h-full min-w-0 flex-1 flex-col">
-      <header className="flex h-14 shrink-0 items-center gap-2 px-3 md:px-5">
+      <header className="flex min-h-14 shrink-0 items-center gap-2 px-3 md:px-5">
         <button
           type="button"
           onClick={onOpenSidebar}
@@ -57,6 +84,12 @@ export function ChatWindow({
           <MenuIcon />
         </button>
         <h1 className="flex-1 truncate text-base font-medium">{title}</h1>
+        <AppearanceControls
+          theme={theme}
+          textSize={textSize}
+          onThemeChange={onThemeChange}
+          onTextSizeChange={onTextSizeChange}
+        />
         <button
           type="button"
           onClick={onNewChat}
@@ -67,7 +100,7 @@ export function ChatWindow({
         </button>
       </header>
 
-      <div className="flex-1 overflow-y-auto" aria-live="polite">
+      <div className="flex-1 overflow-y-auto">
         {isEmpty ? (
           <div className="flex h-full flex-col items-center justify-center gap-6 px-4">
             <h2 className="text-2xl font-semibold">How can I help you today?</h2>
@@ -86,10 +119,23 @@ export function ChatWindow({
             </div>
           </div>
         ) : (
-          <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6">
+          <div
+            className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6"
+            data-text-size={textSize}
+            role="log"
+            aria-label="Conversation messages"
+            aria-live="polite"
+            aria-relevant="additions"
+            aria-atomic="false"
+          >
             {isLoading && <p className="text-center text-sm text-neutral-500">Loading messages…</p>}
-            {messages.map((message) => (
-              <MessageBubble key={message.id} message={message} />
+            {messages.map((message, index) => (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                textSize={textSize}
+                messageNumber={index + 1}
+              />
             ))}
             {isGenerating && <TypingIndicator />}
             <div ref={bottomRef} />
@@ -109,10 +155,19 @@ export function ChatWindow({
             </button>
           </div>
         )}
+        <ProviderSelector
+          options={providerOptions}
+          selectedProvider={selectedProvider}
+          selectedModel={selectedModel}
+          availableModels={availableModels}
+          isLoadingModels={isLoadingModels}
+          modelLoadFailed={modelLoadFailed}
+          disabled={isBusy}
+          onProviderChange={onProviderChange}
+          onModelChange={onModelChange}
+          onRefreshModels={onRefreshModels}
+        />
         <InputArea onSend={onSend} onStop={onStop} isGenerating={isGenerating} disabled={isBusy && !isGenerating} />
-        <p className="mt-2 text-center text-xs text-neutral-500">
-          {providerName}: {providerDescription}
-        </p>
       </div>
     </main>
   )

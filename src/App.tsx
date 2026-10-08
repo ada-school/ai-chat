@@ -1,24 +1,44 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ConnectivityNotice } from './components/ConnectivityNotice'
 import { ChatWindow } from './components/ChatWindow'
 import { ConversationList } from './components/ConversationList'
 import { UpdatePrompt } from './components/UpdatePrompt'
+import type { AiProviderId } from './types/ai'
 import { CloseIcon } from './components/icons'
+import { useAppearance } from './hooks/useAppearance'
 import { useAuth } from './hooks/useAuth'
 import { useChat } from './hooks/useChat'
 import { useConnectivity } from './hooks/useConnectivity'
+import { useOllamaModels } from './hooks/useOllamaModels'
 import { env } from './lib/env'
-import { getChatProvider } from './services/ai'
+import { createChatProvider } from './services/ai'
 import { PROVIDER_CATALOG } from './services/ai/catalog'
 import { getChatRepository } from './services/chat'
 
 const repository = getChatRepository()
-const provider = getChatProvider()
 
 export default function App() {
   const isOnline = useConnectivity()
+  const appearance = useAppearance()
   const auth = useAuth()
-  const chat = useChat({ repository, provider, enabled: auth.status === 'ready' })
+  const [selectedProvider, setSelectedProvider] = useState<AiProviderId>(env.aiProvider)
+  const [selectedModel, setSelectedModel] = useState(env.ollamaModel)
+  const ollama = useOllamaModels(env.ollamaBaseUrl)
+  const providerOptions = [
+    { provider: PROVIDER_CATALOG.mock, available: true },
+    { provider: PROVIDER_CATALOG.ollama, available: true },
+    ...(repository.kind === 'supabase' || selectedProvider === 'gemini'
+      ? [{ provider: PROVIDER_CATALOG.gemini, available: repository.kind === 'supabase' }]
+      : []),
+  ]
+  const effectiveModel = ollama.models.some((model) => model.name === selectedModel)
+    ? selectedModel
+    : ollama.models[0]?.name ?? selectedModel
+  const activeProvider = useMemo(
+    () => createChatProvider(selectedProvider, { ...env, ollamaModel: effectiveModel }),
+    [selectedProvider, effectiveModel],
+  )
+  const chat = useChat({ repository, provider: activeProvider, enabled: auth.status === 'ready' })
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const activeTitle = chat.conversations.find((c) => c.id === chat.activeId)?.title ?? 'New chat'
@@ -88,12 +108,19 @@ export default function App() {
 
         <ChatWindow
           title={activeTitle}
-          providerName={
-            env.aiProvider === 'ollama'
-              ? `${PROVIDER_CATALOG.ollama.displayName} · ${env.ollamaModel}`
-              : PROVIDER_CATALOG[env.aiProvider].displayName
-          }
-          providerDescription={PROVIDER_CATALOG[env.aiProvider].description}
+          providerOptions={providerOptions}
+          selectedProvider={selectedProvider}
+          selectedModel={effectiveModel}
+          availableModels={ollama.models.map((model) => model.name)}
+          isLoadingModels={ollama.isLoading}
+          modelLoadFailed={ollama.error}
+          onProviderChange={setSelectedProvider}
+          onModelChange={setSelectedModel}
+          onRefreshModels={ollama.refresh}
+          theme={appearance.theme}
+          textSize={appearance.textSize}
+          onThemeChange={appearance.setTheme}
+          onTextSizeChange={appearance.setTextSize}
           messages={chat.messages}
           isLoading={chat.isLoadingMessages}
           isGenerating={chat.isGenerating}

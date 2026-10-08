@@ -6,6 +6,7 @@ The app ships a full chat experience (conversation list, chat bubbles, persisten
 
 - ⚡ React 19 + TypeScript + Vite 8
 - 🎨 Tailwind CSS v4, light/dark mode, mobile-friendly sidebar
+- 📝 Accessible Markdown replies, adjustable text size, and system/light/dark appearance settings
 - 📲 PWA: installable, precached app shell, update prompt
 - 🗄️ Supabase Postgres with Row Level Security, anonymous auth
 - 🤖 Ollama local LLM + extensible provider catalog; Gemini Edge Function placeholder
@@ -25,6 +26,8 @@ npm run dev
 ```
 
 Open http://localhost:5173. With no env vars set, the app runs in **local mode**: chats are saved in your browser only.
+
+Use **Display** in the chat header to choose system, light, or dark appearance and adjust message text size. Assistant messages render safe Markdown and GitHub-flavored tables; raw HTML from model output is not rendered as markup.
 
 ## Connecting Supabase
 
@@ -79,7 +82,7 @@ npx supabase status         # prints the local API URL and anon key for .env.loc
    VITE_OLLAMA_BASE_URL=http://localhost:11434
    VITE_OLLAMA_MODEL=llama3.2
    ```
-4. Restart `npm run dev`. The chat footer shows the provider and model. Prompts are sent directly from the browser to this configured Ollama URL; Ollama runs on your hardware and has no per-token provider charge.
+4. Restart `npm run dev`. The controls below the composer show the AI source and model. Switch between Ollama and demo replies there; if more than one Ollama model is installed, choose the model in the adjacent selector. Prompts are sent directly from the browser to this configured Ollama URL; Ollama runs on your hardware and has no per-token provider charge.
 
 The browser calls Ollama's non-streaming `/api/chat` endpoint and cancels an in-flight request when the user presses Stop. Because this SPA connects directly, browser CORS must allow the exact app origin. Ollama must be reachable from the device running the browser; this setup does not expose your local Ollama server to other users of a deployed site. No Ollama API key is put in the browser.
 

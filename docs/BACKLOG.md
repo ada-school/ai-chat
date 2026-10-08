@@ -73,7 +73,9 @@ Acceptance criteria
 - [x] Desktop: fixed sidebar + centred chat column (max ~768px).
 - [x] Mobile: the sidebar becomes a drawer opened from a hamburger button, with a backdrop.
 - [x] Light and dark mode follow the OS preference.
+- [x] Display settings allow system/light/dark themes and adjustable message text size.
 - [x] Landmarks (`nav`, `main`, `form`), labelled icon buttons, and `aria-live` on the message list.
+- [x] Messages expose accessible names and use semantic Markdown with keyboard-visible focus and reduced-motion-aware scrolling.
 - [x] Safe-area insets respected on notched devices.
 
 ### US-08 · Clear error feedback ✅
@@ -107,6 +109,7 @@ Acceptance criteria
 - [x] The Ollama URL and model are configurable, with local defaults, and the provider sends full chat history using the Ollama chat API.
 - [x] The provider supports request cancellation, validates responses, and reports safe, actionable errors for unreachable servers and missing models.
 - [x] The UI identifies the active provider and configured local model; conversation persistence remains independent of the AI provider.
+- [x] The composer shows the active source and model, and lets users switch between configured providers and installed Ollama models.
 - [x] Provider metadata includes pricing semantics: Ollama local/no per-token provider charge, mock free, cloud pricing unknown until explicitly configured.
 - [x] Provider contracts and registry allow adding future providers (including Claude or Gemini) without changing UI or chat orchestration.
 - [x] Setup and CORS requirements are documented; credentials are not embedded in the browser.
@@ -127,7 +130,7 @@ Acceptance criteria
 - [x] `ConversationList`, `ChatWindow`, `MessageBubble`, `InputArea`, `TypingIndicator`.
 - [x] Empty state with suggestion chips.
 - [x] Auto-growing textarea, auto-scroll to the latest message.
-- [ ] ⬜ Markdown rendering for assistant messages (`react-markdown` + sanitisation), code blocks with copy button.
+- [x] Safe Markdown rendering for assistant messages (`react-markdown` + GFM), including readable tables, lists, links, blockquotes and code blocks.
 
 ### Phase 3 — Supabase integration ✅
 - [x] Supabase client singleton with env-based enable/disable.
