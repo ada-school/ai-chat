@@ -22,6 +22,21 @@ describe('userFacingError', () => {
     expect(userFacingError({ status: 503 }, 'loadingConversations')).toContain('temporarily unavailable')
   })
 
+  it('gives Ollama-specific guidance when a local model is unavailable', () => {
+    expect(
+      userFacingError(
+        { code: 'MODEL_NOT_FOUND', status: 404, message: "model 'missing' not found" },
+        'generatingReply',
+      ),
+    ).toContain('Pull the model in Ollama')
+  })
+
+  it('points to Ollama server settings when its local endpoint cannot be reached', () => {
+    expect(userFacingError({ code: 'OLLAMA_UNREACHABLE' }, 'generatingReply')).toContain(
+      'VITE_OLLAMA_BASE_URL',
+    )
+  })
+
   it('uses contextual safe copy for unknown failures', () => {
     const message = userFacingError(new Error('secret database host details'), 'savingMessage')
 

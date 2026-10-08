@@ -2,13 +2,13 @@
 
 A minimal, installable **ChatGPT-style chat app** built as a Progressive Web App with React, Vite, Tailwind CSS and Supabase.
 
-v1 ships the full chat experience (conversation list, chat bubbles, persistence, offline-capable app shell) with **hardcoded assistant replies**. The AI layer sits behind a `ChatProvider` interface, so you can plug in Google Gemini later without changing the UI.
+The app ships a full chat experience (conversation list, chat bubbles, persistence, offline-capable app shell) and supports both **hardcoded demo replies** and local inference through **Ollama**. Providers are selected behind a shared `ChatProvider` registry, so additional providers can be added without changing chat orchestration or UI.
 
 - ⚡ React 19 + TypeScript + Vite 8
 - 🎨 Tailwind CSS v4, light/dark mode, mobile-friendly sidebar
 - 📲 PWA: installable, precached app shell, update prompt
 - 🗄️ Supabase Postgres with Row Level Security, anonymous auth
-- 🤖 Gemini-ready: provider abstraction + Edge Function stub (API key stays server-side)
+- 🤖 Ollama local LLM + extensible provider catalog; Gemini Edge Function placeholder
 - 💾 Works with no backend: falls back to `localStorage` when Supabase isn't configured
 
 See [`CLAUDE.md`](./CLAUDE.md) for the full technical spec and [`docs/BACKLOG.md`](./docs/BACKLOG.md) for user stories and the roadmap.
@@ -57,12 +57,35 @@ npx supabase status         # prints the local API URL and anon key for .env.loc
 | --- | --- | --- |
 | `VITE_SUPABASE_URL` | no* | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | no* | Supabase anon/publishable key (safe to expose; data is protected by RLS) |
-| `VITE_AI_PROVIDER` | no | `mock` (default) or `gemini` |
+| `VITE_AI_PROVIDER` | no | `mock` (default), `ollama`, or `gemini` |
 | `VITE_MOCK_REPLY_DELAY_MS` | no | Simulated reply latency, default `700` |
+| `VITE_OLLAMA_BASE_URL` | no | Ollama server URL, default `http://localhost:11434` |
+| `VITE_OLLAMA_MODEL` | no | Installed Ollama model, default `llama3.2` |
 | `GEMINI_API_KEY` | later | **Server-side only.** Set as a Supabase secret, never with a `VITE_` prefix |
 | `GEMINI_MODEL` | later | Gemini model id used by the Edge Function |
 
 \* Without them the app uses local mode.
+
+## Connecting local Ollama
+
+1. Install and start [Ollama](https://ollama.com/), then download a model:
+   ```bash
+   ollama pull llama3.2
+   ```
+2. Allow the origin serving this app in Ollama's CORS configuration. For local Vite development, set `OLLAMA_ORIGINS=http://localhost:5173,http://127.0.0.1:5173` in Ollama's environment before starting/restarting `ollama serve`. For another app origin, allow that exact origin instead. Do not expose Ollama with a wildcard origin.
+3. In `.env.local`, select Ollama and (optionally) a different server or installed model:
+   ```dotenv
+   VITE_AI_PROVIDER=ollama
+   VITE_OLLAMA_BASE_URL=http://localhost:11434
+   VITE_OLLAMA_MODEL=llama3.2
+   ```
+4. Restart `npm run dev`. The chat footer shows the provider and model. Prompts are sent directly from the browser to this configured Ollama URL; Ollama runs on your hardware and has no per-token provider charge.
+
+The browser calls Ollama's non-streaming `/api/chat` endpoint and cancels an in-flight request when the user presses Stop. Because this SPA connects directly, browser CORS must allow the exact app origin. Ollama must be reachable from the device running the browser; this setup does not expose your local Ollama server to other users of a deployed site. No Ollama API key is put in the browser.
+
+## Provider catalog and pricing
+
+Provider implementations share the `ChatProvider` contract and are selected through the registry in `src/services/ai/`. The catalog records pricing semantics: Ollama is local/no per-token provider charge, demo replies are free, and Gemini pricing is marked unknown until a model and current rates are explicitly configured. It does not claim to calculate costs. Future providers such as Claude can add an implementation and catalog entry while leaving the UI and chat flow unchanged; hosted-provider credentials should remain server-side.
 
 ## Scripts
 
@@ -91,7 +114,7 @@ Open http://localhost:4173 in Chrome, then use the install icon in the address b
 3. `npx supabase functions deploy chat`
 4. Set `VITE_AI_PROVIDER=gemini` and rebuild.
 
-If the function fails, the client falls back to the mock provider, so the chat keeps working.
+If the function fails, the client falls back to demo replies, so the chat keeps working.
 
 ---
 
@@ -106,7 +129,8 @@ flowchart LR
         Hooks["Hooks<br/>useAuth · useChat"]
         Repo["ChatRepository"]
         Provider["ChatProvider"]
-        Mock["MockChatProvider<br/>(v1 hardcoded)"]
+        Mock["MockChatProvider<br/>(demo)"]
+        Ollama["OllamaChatProvider<br/>(local)"]
         Gemini["GeminiChatProvider"]
         Local[("localStorage<br/>(local mode)")]
         SW["Service Worker<br/>(Workbox precache)"]
@@ -115,10 +139,13 @@ flowchart LR
         Hooks --> Repo
         Hooks --> Provider
         Provider --> Mock
+        Provider --> Ollama
         Provider -.-> Gemini
         Gemini -. fallback .-> Mock
         Repo -.-> Local
     end
+
+    Ollama -- "browser fetch /api/chat" --> LocalLLM["Ollama server (local)"]
 
     subgraph Supabase
         Auth["Auth<br/>(anonymous sign-in)"]
@@ -126,7 +153,7 @@ flowchart LR
         Fn["Edge Function<br/>chat"]
     end
 
-    GeminiAPI["Google Gemini API"]
+    GeminiAPI["Google Gemini API (future)"]
 
     Hooks -- "session / JWT" --> Auth
     Repo -- "supabase-js (REST)" --> DB
@@ -178,7 +205,7 @@ sequenceDiagram
     participant UI as ChatWindow / InputArea
     participant H as useChat
     participant R as ChatRepository (Supabase)
-    participant P as ChatProvider (Mock)
+    participant P as ChatProvider (selected)
 
     U->>UI: Type message, press Enter
     UI->>H: sendMessage(text)
@@ -190,7 +217,7 @@ sequenceDiagram
     R-->>H: Message (persisted)
     H-->>UI: Render user bubble + typing indicator
     H->>P: generateReply(history)
-    Note over P: v1: canned reply after a short delay<br/>future: Gemini via Edge Function
+    Note over P: Demo replies, local Ollama, or Gemini placeholder
     P-->>H: reply text
     H->>R: addMessage(role = assistant)
     R-->>H: Message (persisted)
@@ -209,7 +236,7 @@ src/
   hooks/        useAuth, useChat
   lib/          env parsing, Supabase client
   services/
-    ai/         ChatProvider interface, mock + Gemini providers
+    ai/         ChatProvider interface, provider catalog, mock + Ollama + Gemini providers
     chat/       ChatRepository interface, Supabase + localStorage repositories
   types/        Domain types
 supabase/

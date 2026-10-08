@@ -64,6 +64,16 @@ export function userFacingError(error: unknown, context: UserErrorContext): stri
   const details = errorDetails(error)
   const combinedMessage = details.messages.join(' ')
 
+  if (details.codes.includes('MODEL_NOT_FOUND')) {
+    return "The configured Ollama model wasn't found. Pull the model in Ollama and check VITE_OLLAMA_MODEL."
+  }
+  if (details.codes.includes('OLLAMA_UNREACHABLE')) {
+    return "Couldn't reach Ollama. Check that its server is running and VITE_OLLAMA_BASE_URL is correct."
+  }
+  if (details.codes.includes('OLLAMA_HTTP_ERROR')) {
+    return "Ollama couldn't complete the request. Check that the selected model is available."
+  }
+
   const isOffline =
     (typeof navigator !== 'undefined' && !navigator.onLine) ||
     /failed to fetch|fetch failed|networkerror|network request failed|load failed|offline|connection refused|connection lost|internet disconnected/i.test(

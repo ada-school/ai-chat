@@ -8,16 +8,17 @@ interface CannedReply {
 const CANNED_REPLIES: CannedReply[] = [
   {
     match: /\b(hi|hello|hey|hola)\b/i,
-    reply: "Hello! I'm a placeholder assistant. Real AI responses are coming soon — for now I reply with canned messages.",
+    reply: "Hello! These are demo replies. Select the local Ollama provider to chat with a real model on your machine.",
   },
   {
     match: /\b(help|what can you do)\b/i,
     reply:
-      'Right now I can:\n\n- Keep your conversations saved\n- Work offline as an installable app\n- Reply with hardcoded messages\n\nOnce Gemini is connected I will answer for real.',
+      'This app can:\n\n- Keep your conversations saved\n- Run an LLM locally through Ollama\n- Use demo replies without an LLM connection\n\nSelect Ollama in the AI provider settings to use a local model.',
   },
   {
     match: /\b(gemini|ai|model)\b/i,
-    reply: 'This app is wired to use Google Gemini later. In v1 every reply comes from a mock provider.',
+    reply:
+      'Ollama is available for local model responses. Gemini uses the configured Supabase Edge Function and currently falls back to demo replies if unavailable.',
   },
   {
     match: /\b(thanks|thank you|gracias)\b/i,
@@ -26,9 +27,9 @@ const CANNED_REPLIES: CannedReply[] = [
 ]
 
 const FALLBACK_REPLIES = [
-  "That's interesting! (This is a hardcoded reply — AI isn't connected yet.)",
-  'Got it. Once Gemini is plugged in, I will be able to give you a real answer.',
-  "I'm a demo assistant for now, but your message has been saved.",
+  "That's interesting! (This is a demo reply.)",
+  'Got it. Select Ollama to generate a response with a local language model.',
+  'This is a demo reply, and your message has been saved.',
 ]
 
 function sleep(ms: number, signal?: AbortSignal): Promise<void> {

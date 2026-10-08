@@ -9,6 +9,8 @@ const SUGGESTIONS = ['Hello!', 'What can you do?', 'Tell me about Gemini']
 
 interface ChatWindowProps {
   title: string
+  providerName: string
+  providerDescription: string
   messages: Message[]
   isLoading: boolean
   isGenerating: boolean
@@ -23,6 +25,8 @@ interface ChatWindowProps {
 
 export function ChatWindow({
   title,
+  providerName,
+  providerDescription,
   messages,
   isLoading,
   isGenerating,
@@ -107,7 +111,7 @@ export function ChatWindow({
         )}
         <InputArea onSend={onSend} onStop={onStop} isGenerating={isGenerating} disabled={isBusy && !isGenerating} />
         <p className="mt-2 text-center text-xs text-neutral-500">
-          Replies are hardcoded in this version. AI integration is coming soon.
+          {providerName}: {providerDescription}
         </p>
       </div>
     </main>

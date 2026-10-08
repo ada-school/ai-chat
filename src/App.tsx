@@ -7,7 +7,9 @@ import { CloseIcon } from './components/icons'
 import { useAuth } from './hooks/useAuth'
 import { useChat } from './hooks/useChat'
 import { useConnectivity } from './hooks/useConnectivity'
+import { env } from './lib/env'
 import { getChatProvider } from './services/ai'
+import { PROVIDER_CATALOG } from './services/ai/catalog'
 import { getChatRepository } from './services/chat'
 
 const repository = getChatRepository()
@@ -86,6 +88,12 @@ export default function App() {
 
         <ChatWindow
           title={activeTitle}
+          providerName={
+            env.aiProvider === 'ollama'
+              ? `${PROVIDER_CATALOG.ollama.displayName} · ${env.ollamaModel}`
+              : PROVIDER_CATALOG[env.aiProvider].displayName
+          }
+          providerDescription={PROVIDER_CATALOG[env.aiProvider].description}
           messages={chat.messages}
           isLoading={chat.isLoadingMessages}
           isGenerating={chat.isGenerating}

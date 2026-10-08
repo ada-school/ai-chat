@@ -3,7 +3,7 @@ import { MockChatProvider, pickMockReply } from './mockProvider'
 
 describe('pickMockReply', () => {
   it('matches canned replies by keyword', () => {
-    expect(pickMockReply('hello there', 0)).toMatch(/placeholder assistant/)
+    expect(pickMockReply('hello there', 0)).toMatch(/demo replies/)
   })
 
   it('cycles fallback replies for unmatched input', () => {

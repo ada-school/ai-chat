@@ -1,6 +1,6 @@
 # Backlog
 
-Product backlog for **ai-chat**. v1 = full chat experience with hardcoded replies; Gemini comes later.
+Product backlog for **ai-chat**. The app supports hardcoded demo replies and local Ollama; cloud providers are added through the provider interface.
 
 Legend: ✅ done in the initial scaffold · ⬜ to do
 
@@ -99,6 +99,19 @@ Acceptance criteria
 - [x] Connectivity transitions and error mapping have focused automated tests.
 - [x] Offline send queuing and automatic retry remain out of scope.
 
+### US-10 · Connect a local LLM and extend provider catalog ✅
+**As a** user **I want to** run chat replies through my local Ollama installation **so that** I can use a real model without sending prompts to a hosted AI provider.
+
+Acceptance criteria
+- [x] `VITE_AI_PROVIDER=ollama` selects Ollama through the shared provider factory; mock remains the default.
+- [x] The Ollama URL and model are configurable, with local defaults, and the provider sends full chat history using the Ollama chat API.
+- [x] The provider supports request cancellation, validates responses, and reports safe, actionable errors for unreachable servers and missing models.
+- [x] The UI identifies the active provider and configured local model; conversation persistence remains independent of the AI provider.
+- [x] Provider metadata includes pricing semantics: Ollama local/no per-token provider charge, mock free, cloud pricing unknown until explicitly configured.
+- [x] Provider contracts and registry allow adding future providers (including Claude or Gemini) without changing UI or chat orchestration.
+- [x] Setup and CORS requirements are documented; credentials are not embedded in the browser.
+- [x] Unit tests cover Ollama request shape, cancellation signal, provider selection, metadata, and error handling.
+
 ---
 
 ## Implementation plan
@@ -129,6 +142,7 @@ Acceptance criteria
 - [x] Lazy conversation creation on first message, auto-title.
 - [x] `ChatProvider` interface + `MockChatProvider` with abort support.
 - [x] `GeminiChatProvider` placeholder → Edge Function, with mock fallback.
+- [x] Ollama local provider and provider metadata catalog.
 - [x] Replies that land after switching chats are saved to the right conversation and not shown in the current one.
 - [ ] ⬜ Component tests for `useChat` with a fake repository and provider.
 
