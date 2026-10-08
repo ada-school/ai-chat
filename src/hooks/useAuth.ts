@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { userFacingError } from '../lib/userFacingError'
 
 export type AuthStatus = 'loading' | 'ready' | 'error'
 
@@ -42,7 +43,7 @@ export function useAuth(): AuthState {
           setState({
             status: 'error',
             session: null,
-            error: err instanceof Error ? err.message : 'Could not sign in',
+            error: userFacingError(err, 'authentication'),
           })
         }
       }

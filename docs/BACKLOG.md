@@ -86,6 +86,21 @@ Acceptance criteria
 
 ---
 
+### US-09 · Manage connectivity and explain failures ✅
+**As a** user **I want to** understand when the app is offline or an operation fails **so that** I know what still works and how to continue.
+
+Acceptance criteria
+- [x] The app reflects online/offline transitions without requiring a reload.
+- [x] An accessible offline notice explains that local conversations remain available in local mode and that cloud actions may be unavailable in Supabase mode.
+- [x] Going offline does not silently discard a send attempt or disable the input; failed operations explain that the user should reconnect and retry.
+- [x] Authentication, conversation/message persistence, and reply-generation failures show contextual, readable messages instead of raw backend exceptions.
+- [x] Known network, authentication/permission, rate-limit, and service failures are distinguished where error metadata supports it; unknown failures use a safe, actionable message.
+- [x] The UI does not expose raw technical exception text. The existing Gemini-to-mock fallback and local-mode offline support continue to work.
+- [x] Connectivity transitions and error mapping have focused automated tests.
+- [x] Offline send queuing and automatic retry remain out of scope.
+
+---
+
 ## Implementation plan
 
 ### Phase 1 — Project setup ✅

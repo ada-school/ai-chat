@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { userFacingError } from '../lib/userFacingError'
 import type { ChatProvider } from '../services/ai'
 import type { ChatRepository } from '../services/chat'
 import type { Conversation, Message } from '../types/chat'
@@ -10,10 +11,6 @@ export function titleFromMessage(text: string): string {
   return singleLine.length > TITLE_MAX_LENGTH
     ? `${singleLine.slice(0, TITLE_MAX_LENGTH - 1).trimEnd()}…`
     : singleLine || 'New chat'
-}
-
-function errorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : 'Something went wrong'
 }
 
 interface UseChatOptions {
@@ -46,7 +43,7 @@ export function useChat({ repository, provider, enabled }: UseChatOptions) {
     repository
       .listConversations()
       .then((list) => !cancelled && setConversations(list))
-      .catch((err) => !cancelled && setError(errorMessage(err)))
+      .catch((err) => !cancelled && setError(userFacingError(err, 'loadingConversations')))
     return () => {
       cancelled = true
     }
@@ -64,7 +61,7 @@ export function useChat({ repository, provider, enabled }: UseChatOptions) {
         const loaded = await repository.listMessages(id)
         if (activeIdRef.current === id) setMessages(loaded)
       } catch (err) {
-        setError(errorMessage(err))
+        setError(userFacingError(err, 'loadingMessages'))
       } finally {
         if (activeIdRef.current === id) setIsLoadingMessages(false)
       }
@@ -86,7 +83,7 @@ export function useChat({ repository, provider, enabled }: UseChatOptions) {
         setConversations((prev) => prev.filter((c) => c.id !== id))
         if (activeIdRef.current === id) startNewChat()
       } catch (err) {
-        setError(errorMessage(err))
+        setError(userFacingError(err, 'deletingConversation'))
       }
     },
     [repository, startNewChat],
@@ -100,6 +97,7 @@ export function useChat({ repository, provider, enabled }: UseChatOptions) {
 
       let conversationId = activeIdRef.current
       const priorMessages = conversationId ? messages : []
+      let errorContext: 'savingMessage' | 'generatingReply' | 'loadingConversations' = 'savingMessage'
       try {
         if (!conversationId) {
           const created = await repository.createConversation(titleFromMessage(text))
@@ -118,6 +116,7 @@ export function useChat({ repository, provider, enabled }: UseChatOptions) {
         const controller = new AbortController()
         abortRef.current = controller
 
+        errorContext = 'generatingReply'
         const reply = await provider.generateReply({
           conversationId,
           messages: history.map(({ role, content }) => ({ role, content })),
@@ -129,13 +128,15 @@ export function useChat({ repository, provider, enabled }: UseChatOptions) {
           role: 'assistant',
           content: reply,
         })
+        errorContext = 'savingMessage'
         if (activeIdRef.current === conversationId) {
           setMessages((prev) => [...prev, assistantMessage])
         }
+        errorContext = 'loadingConversations'
         await refreshConversations()
       } catch (err) {
         if (abortRef.current?.signal.aborted) return
-        setError(errorMessage(err))
+        setError(userFacingError(err, errorContext))
       } finally {
         abortRef.current = null
         setGeneratingId(null)
